@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Home Gamepad Vizriawan — Toko Gamepad</title>
+<style>
+  :root{
+    --bg1:#1e3c72; --bg2:#2a5298; --accent:#ff7a18;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+    color:#111;
+    min-height:100vh;
+    padding:20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  header{
+    background: linear-gradient(90deg,#ff8a00,#ff3d00);
+    color:white;padding:18px;border-radius:12px;text-align:center;font-weight:700;font-size:20px;
+    box-shadow:0 6px 24px rgba(0,0,0,0.18);
+  }
+  .desc{
+    background:#0f1724cc;color:#e6eef8;padding:18px;border-radius:12px;margin:18px 0;
+    line-height:1.45;
+  }
+  .banner{
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    border-radius:14px;padding:26px;text-align:center;color:white;margin-bottom:22px;box-shadow:0 12px 30px rgba(0,0,0,0.25)
+  }
+  .banner h1{font-size:28px;margin-bottom:8px}
+  .banner .note{opacity:0.95}
+  /* grid */
+  .products-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill,minmax(300px,1fr));
+    gap:22px;margin-bottom:22px;
+  }
+  .product-card{
+    background:white;border-radius:12px;padding:18px;position:relative;cursor:pointer;
+    transition:all .22s;box-shadow:0 8px 22px rgba(2,6,23,0.12);
+    display:flex;flex-direction:column;gap:12px;height:100%;
+  }
+  .product-card:hover{transform:translateY(-6px);box-shadow:0 14px 36px rgba(2,6,23,0.18)}
+  .product-card.selected{border:3px solid #667eea}
+  .product-image{background:#f7f9fc;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:center;height:170px;overflow:hidden}
+  .product-image img{max-width:100%;max-height:150px;object-fit:contain;display:block}
+  .badge{background:#ff4757;color:white;padding:6px 12px;border-radius:999px;font-weight:700;font-size:12px;display:inline-block}
+  .pname{color:#0b2a4a;font-weight:700;font-size:18px}
+  .pdesc{color:#556b7a;font-size:13px}
+  .price-old{color:#9aa3ad;text-decoration:line-through;font-size:13px}
+  .price-new{color:var(--accent);font-weight:800;font-size:18px}
+  .quantity-controls{position:absolute;top:12px;right:12px;display:flex;gap:8px;align-items:center;background:#fff;padding:6px;border-radius:999px;box-shadow:0 6px 18px rgba(2,6,23,0.09)}
+  .qty-btn{width:32px;height:32px;border-radius:50%;border:none;background:#667eea;color:white;font-weight:700;cursor:pointer}
+  .qty-display{min-width:30px;text-align:center;font-weight:700;color:#334155}
+  /* cart */
+  .cart-summary{background:white;border-radius:12px;padding:18px;box-shadow:0 8px 22px rgba(2,6,23,0.12);display:none}
+  .cart-summary.show{display:block}
+  .cart-items{max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+  .cart-item{display:flex;justify-content:space-between;align-items:center;background:#f5f7fb;padding:12px;border-radius:10px}
+  .cart-item-info{flex:1}
+  .cart-item-name{font-weight:700;color:#0b2a4a}
+  .cart-item-price{color:#54626d;font-size:13px}
+  .cart-item-qty{font-weight:700;color:#2b6cb0;margin-right:10px}
+  .remove-item{background:#ff4757;border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer}
+  .cart-total{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #e6eef8;font-weight:800;color:#0b2a4a}
+  .clear-cart{background:transparent;border:2px solid #ff4757;color:#ff4757;padding:8px 14px;border-radius:999px;cursor:pointer;margin-top:12px}
+  /* payment */
+  .payment-section{background:white;border-radius:12px;padding:20px;margin-top:18px;box-shadow:0 8px 22px rgba(2,6,23,0.12)}
+  .payment-methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .payment-method{background:#fbfdff;border:1px solid #e7eef8;padding:12px;border-radius:10px;text-align:center;cursor:pointer;transition:all .18s}
+  .payment-method.selected{border-color:#667eea;background:linear-gradient(135deg,#eef2ff,#f8fafc)}
+  .order-button{background:linear-gradient(90deg,#10ac84,#0fb978);color:white;border:none;padding:14px;border-radius:999px;font-weight:800;cursor:pointer;margin-top:14px;width:100%;max-width:420px;display:block;margin-left:auto;margin-right:auto}
+  .order-button:disabled{background:#cbd5e1;cursor:not-allowed}
+  .error-message{color:#ff4757;text-align:center;margin-top:10px;display:none}
+  /* success toast */
+  .toast{position:fixed;right:20px;bottom:20px;background:#0f1724;color:white;padding:14px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(2,6,23,0.3);display:none}
+  .toast.show{display:block}
+  /* responsive */
+  @media (max-width:900px){
+    .products-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  }
+  @media (max-width:520px){
+    .products-grid{grid-template-columns:1fr}
+    .quantity-controls{top:10px;right:8px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>Home Gamepad Vizriawan</header>
+
+  <div class="banner" style="margin-top:16px">
+    <h1>🎮 GAMEPAD MEGA SALE</h1>
+    <div style="margin-top:6px;font-weight:700">DISKON HINGGA 60% OFF!</div>
+    <p class="note" style="margin-top:8px;opacity:.95">Stok terbatas — belanja sekarang biar nggak nyesel.</p>
+  </div>
+
+  <div class="desc">
+    <strong>Deskripsi</strong><br>
+    Home Gamepad Vizriawan adalah toko yang menyediakan berbagai jenis gamepad dan aksesoris gaming berkualitas dengan harga terjangkau. Kami melayani kebutuhan gamer dari yang casual sampai profesional, dengan produk original, nyaman digenggam, dan kompatibel untuk PC, laptop, maupun konsol.
+  </div>
+
+  <!-- products -->
+  <section class="products-grid" id="productsGrid" aria-live="polite"></section>
+
+  <!-- cart -->
+  <section class="cart-summary" id="cartSummary" aria-live="polite">
+    <h3>🛒 Keranjang Belanja</h3>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-total">
+      <div>Total</div>
+      <div id="cartTotalAmount">Rp 0</div>
+    </div>
+    <button class="clear-cart" onclick="clearCart()">🗑️ Kosongkan Keranjang</button>
+  </section>
+
+  <!-- payment -->
+  <section class="payment-section" aria-label="Pembayaran">
+    <h3>💳 Pilih Metode Pembayaran</h3>
+    <div class="payment-methods">
+      <div class="payment-method" data-method="BCA">🏦 BCA</div>
+      <div class="payment-method" data-method="Mandiri">🏦 Mandiri</div>
+      <div class="payment-method" data-method="BRI">🏦 BRI</div>
+      <div class="payment-method" data-method="BNI">🏦 BNI</div>
+      <div class="payment-method" data-method="GoPay">💚 GoPay</div>
+      <div class="payment-method" data-method="OVO">💜 OVO</div>
+      <div class="payment-method" data-method="DANA">💙 DANA</div>
+      <div class="payment-method" data-method="ShopeePay">🧡 ShopeePay</div>
+    </div>
+
+    <button class="order-button" id="orderButton" disabled>Pesan via WhatsApp</button>
+    <div class="error-message" id="errorMessage">Silakan pilih produk dan metode pembayaran terlebih dahulu</div>
+  </section>
+</div>
+
+<div class="toast" id="toast">Pesanan dicatat — WA terbuka</div>
+
+<script>
+/* ---------- DATA PRODUK (10 items) ---------- */
+const products = [
+  { id:1, name:"Rexus Asta GX150", description:"Ergonomic, wireless, vibration feedback", oldPrice:340000, newPrice:248900, badge:"BEST SELLER", image: "asta.jpeg"},
+  { id:2, name:"Rexus Daxa Asteria AX1 V2 Gen 2", description:"LED RGB, wireless charging, turbo", oldPrice:450000, newPrice:270000, badge:"HOT ITEM", image:"asteriav2.jpeg" },
+  { id:3, name:"NYK Nemesis Cronus GPX900", description:"Programmable buttons, tournament-grade", oldPrice:5000000, newPrice:274000, badge:"PRO CHOICE", image:"cronus.jpeg" },
+  { id:4, name:"Rexus Gladius GX500", description:"Ultra-responsive, 30 jam battery", oldPrice:600000, newPrice:423000, badge:"NEW", image:"gladius gx500.jpeg" },
+  { id:5, name:"GuliKit KK3 KingKong 3 MAX", description:"Compact, Android & iOS compatible", oldPrice:688000, newPrice:655239, badge:"MOBILE", image:"kk3 max.jpeg" },
+  { id:6, name:"REXUS DAXA CYGNUS AX7", description:"Force feedback, realistic feel", oldPrice:618000, newPrice:618000, badge:"RACING", image:"REXUS DAXA Cygnus AX7.jpeg" },
+  { id:7, name:"NYK Nemesis GP200 ", description:"Sanwa buttons, pro arcade feel", oldPrice:203500, newPrice:187000, badge:"HOT ITEM", image:"rogue gp200.jpeg" },
+  { id:8, name:"SADES Ryunix G90", description:"Murah, nyaman, cocok pemula", oldPrice:599000, newPrice:475000, badge:"BUDGET", image:"ryunixg90.jpeg" },
+  { id:9, name:"Razer Wolverine V2 Chroma", description:"Retro style, wireless for emulators", oldPrice:2299000, newPrice:2298000, badge:"RETRO", image:"Wolverine V2.jpeg" },
+  { id:10, name:"Razer Wolverine V3 Pro", description:"Low latency, premium build", oldPrice:1789000, newPrice:1789000, badge:"ESPORT", image:"Wolverine V3 Pro.jpeg" }
+];
+
+/* ---------- STATE ---------- */
+let cart = {}; // { id: { ...product, quantity } }
+let selectedPayment = null;
+const WA_NUMBER = "6281285779805"; // user-provided
+
+/* ---------- HELPERS ---------- */
+function formatCurrency(v){ return 'Rp ' + v.toLocaleString('id-ID'); }
+function el(sel){ return document.querySelector(sel); }
+function elAll(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+/* ---------- RENDER PRODUCTS ---------- */
+function renderProducts(){
+  const grid = el('#productsGrid');
+  grid.innerHTML = '';
+  products.forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="quantity-controls" aria-hidden="true">
+        <button class="qty-btn dec" title="Kurangi">−</button>
+        <div class="qty-display" id="qty-${p.id}">1</div>
+        <button class="qty-btn inc" title="Tambah">+</button>
+      </div>
+
+      <div class="product-image"><img src="${p.image}" alt="${p.name}"></div>
+      <div><span class="badge">${p.badge}</span></div>
+      <div class="pname pname--small" style="margin-top:6px"><div class="pname">${p.name}</div></div>
+      <div class="pdesc"><div class="pdesc">${p.description}</div></div>
+      <div class="price-section">
+        <span class="price-old">${formatCurrency(p.oldPrice)}</span>
+        <div class="price-new">${formatCurrency(p.newPrice)}</div>
+      </div>
+      <div class="select-indicator" style="display:none">✓ DIPILIH</div>
+    `;
+    // click handlers
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.qty-btn')) return; // ignore clicks on qty buttons
+      toggleProduct(p.id);
+    });
+    // qty buttons
+    const inc = card.querySelector('.inc');
+    const dec = card.querySelector('.dec');
+    inc.addEventListener('click', (e)=>{ e.stopPropagation(); changeQty(p.id, +1); });
+    dec.addEventListener('click', (e)=>{ e.stopPropagation(); changeQty(p.id, -1); });
+    grid.appendChild(card);
+    // initial qty display set to 1
+    const qd = card.querySelector('.qty-display');
+    if(qd) qd.textContent = cart[p.id] ? cart[p.id].quantity : 1;
+  });
+}
+
+/* ---------- CART LOGIC ---------- */
+function toggleProduct(id){
+  const card = document.querySelector(`.product-card[data-id="${id}"]`);
+  if(cart[id]){
+    delete cart[id];
+    card.classList.remove('selected');
+    card.querySelector('.select-indicator').style.display = 'none';
+    card.querySelector('.qty-display').textContent = 1;
+  } else {
+    const prod = products.find(x=>x.id===id);
+    cart[id] = {...prod, quantity: 1};
+    card.classList.add('selected');
+    card.querySelector('.select-indicator').style.display = 'block';
+    card.querySelector('.qty-display').textContent = 1;
+  }
+  updateCartUI();
+}
+
+function changeQty(id, delta){
+  if(!cart[id]) return; // only change qty if product in cart
+  cart[id].quantity = Math.max(1, cart[id].quantity + delta);
+  const qEl = document.getElementById(`qty-${id}`);
+  if(qEl) qEl.textContent = cart[id].quantity;
+  updateCartUI();
+}
+
+function updateCartUI(){
+  const itemsBox = el('#cartItems');
+  const cartSummary = el('#cartSummary');
+  itemsBox.innerHTML = '';
+  let total = 0;
+  const ids = Object.keys(cart);
+  if(ids.length === 0){
+    cartSummary.classList.remove('show');
+  } else {
+    cartSummary.classList.add('show');
+    ids.forEach(k=>{
+      const item = cart[k];
+      const subtotal = item.newPrice * item.quantity;
+      total += subtotal;
+      const row = document.createElement('div');
+      row.className = 'cart-item';
+      row.innerHTML = `
+        <div class="cart-item-info">
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-price">${formatCurrency(item.newPrice)} x ${item.quantity}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="cart-item-qty">${item.quantity}x</div>
+          <button class="remove-item" data-id="${item.id}" aria-label="Hapus">✖</button>
+        </div>
+      `;
+      // remove handler
+      row.querySelector('.remove-item').addEventListener('click', ()=>{
+        removeFromCart(item.id);
+      });
+      itemsBox.appendChild(row);
+    });
+  }
+  el('#cartTotalAmount').textContent = formatCurrency(total);
+  validateOrderButton();
+}
+
+function removeFromCart(id){
+  delete cart[id];
+  const card = document.querySelector(`.product-card[data-id="${id}"]`);
+  if(card){
+    card.classList.remove('selected');
+    card.querySelector('.select-indicator').style.display = 'none';
+    const qEl = card.querySelector('.qty-display'); if(qEl) qEl.textContent = 1;
+  }
+  updateCartUI();
+}
+
+function clearCart(){
+  cart = {};
+  elAll('.product-card').forEach(c=>{
+    c.classList.remove('selected');
+    const ind = c.querySelector('.select-indicator'); if(ind) ind.style.display='none';
+    const qEl = c.querySelector('.qty-display'); if(qEl) qEl.textContent = 1;
+  });
+  updateCartUI();
+}
+
+/* ---------- PAYMENT / ORDER ---------- */
+function setupPaymentMethods(){
+  elAll('.payment-method').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      elAll('.payment-method').forEach(x=>x.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedPayment = btn.dataset.method;
+      validateOrderButton();
+    });
+  });
+}
+
+function validateOrderButton(){
+  const orderBtn = el('#orderButton');
+  const err = el('#errorMessage');
+  if(Object.keys(cart).length>0 && selectedPayment){
+    orderBtn.disabled = false;
+    err.style.display = 'none';
+  } else {
+    orderBtn.disabled = true;
+    if(Object.keys(cart).length===0 || !selectedPayment){
+      err.style.display = 'block';
+    } else { err.style.display = 'none' }
+  }
+}
+
+function buildOrderMessage(){
+  let lines = [];
+  let total = 0;
+  Object.values(cart).forEach(it=>{
+    lines.push(`• ${it.name} x${it.quantity} = ${formatCurrency(it.newPrice * it.quantity)}`);
+    total += it.newPrice * it.quantity;
+  });
+  lines.push('');
+  lines.push(`Total: ${formatCurrency(total)}`);
+  lines.push(`Metode Pembayaran: ${selectedPayment || '-'}`);
+  return lines.join('\n');
+}
+
+function orderViaWhatsApp(){
+  if(Object.keys(cart).length===0 || !selectedPayment){
+    validateOrderButton();
+    return;
+  }
+  const text = encodeURIComponent(`Halo! Saya ingin memesan:\n\n${buildOrderMessage()}\n\nTerima kasih.`);
+  const waUrl = `https://wa.me/${WA_NUMBER}?text=${text}`;
+  // open WA
+  window.open(waUrl, '_blank');
+
+  // show toast + clear cart and reset UI
+  showToast('WA terbuka — pesanan dicatat (jika sudah konfirmasi di WA).');
+  clearCart();
+  // deselect payment
+  selectedPayment = null;
+  elAll('.payment-method').forEach(x=>x.classList.remove('selected'));
+  validateOrderButton();
+}
+
+/* ---------- TOAST ---------- */
+function showToast(msg, timeout=2400){
+  const t = el('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), timeout);
+}
+
+/* ---------- INIT ---------- */
+renderProducts();
+setupPaymentMethods();
+updateCartUI();
+el('#orderButton').addEventListener('click', orderViaWhatsApp);
+
+/* Accessibility: hide error after short time on interactions */
+elAll('.product-card').forEach(c=> c.addEventListener('click', ()=> setTimeout(()=>el('#errorMessage').style.display='none', 500)));
+</script>
+</body>
+</html>
